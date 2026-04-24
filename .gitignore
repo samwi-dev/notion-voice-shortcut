@@ -1,0 +1,25 @@
+# 系統檔
+.DS_Store
+
+# 機密資料（含 Notion Token / API Key）
+.env
+.env.*
+!.env.example
+
+# Claude Code 設定（含 token）
+.claude/
+.claude */
+.claude (*)/
+
+# 含 token 的舊腳本與 payload
+build_shortcut*.py
+notion-api-payload.json
+
+# 捷徑檔（含 token）
+*.shortcut
+
+# Python
+__pycache__/
+*.pyc
+venv/
+.venv/
