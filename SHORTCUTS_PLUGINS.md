@@ -138,8 +138,20 @@ iOS：設定 → 捷徑 → 自動化 → 建立個人自動化
 ---
 
 ## ⚠️ 已知限制
-- Apple Watch 捷徑**無法**轉錄音訊（需在 iPhone 端處理）
+
+### Apple Watch 捷徑能力限制（重要）
+Watch 上跑捷徑**不能執行需要 AI / 重型運算的動作**：
+- ❌ **使用 ChatGPT** — Watch 無法呼叫 OpenAI API 動作
+- ❌ **使用 Apple Intelligence**（生成、改寫、摘要）— Watch 不支援
+- ❌ **轉錄音訊** — 部分 watchOS 版本支援，但不穩定，建議交給 iPhone
+- ❌ **本地 Foundation Models / 機器學習動作** — Watch 沒有對應引擎
+- ✅ **錄音、編碼媒體、文字組合、HTTP 請求** — Watch 可執行
+
+**正確做法：** Watch 捷徑只負責蒐集（錄音、量測、輸入），用「**執行捷徑**」動作把資料丟給 iPhone 上的捷徑接手做 AI / API 處理。
+
+### 其他限制
 - 語音備忘錄 App 的錄音**不在 iCloud Drive**，無法用「取得檔案夾的內容」枚舉
 - iOS 捷徑無法枚舉「Watch 藍牙裝置」當觸發
 - 字典索引是 **1-based**（不是 0-based）
 - Base64 輸出含 MIME 換行，需 `分開文字+結合文字` 清理
+- watchOS 的 Shortcut「儲存到 iCloud Drive」是**同步阻塞**，離線會逾時（不像 iPhone 有本機快取）
