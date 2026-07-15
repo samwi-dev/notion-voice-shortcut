@@ -90,3 +90,48 @@
 - 每次工作結束要明確回答：「今日主線有無前進？」Y/N
 - 若 N：寫出原因 + 明日收斂策略。
 - 每日進度同步到 Notion 「In Progress」資料庫，欄位：**日期｜階段｜做了什麼｜結果/問題｜下一步**。
+
+---
+
+## 專案結構
+本專案**沒有應用程式原始碼**，是純文件驅動的 Apple Shortcut 專案框架，Shortcut 本身只存在於 iOS/macOS 捷徑 App 裡（本 repo 不含 `.shortcut` 檔）。
+
+| 檔案 | 用途 |
+|---|---|
+| `README.md` | 專案定位、背景、當下狀態、問題積欠清單、今日進度（「讀進度」指令的資料來源） |
+| `CLAUDE.md` | 本檔，Claude 行為規範 |
+| `SHORTCUTS_PLUGINS.md` | 可用 MCP / iOS 內建動作 / 自動化觸發 / 現成捷徑來源盤點，含「Apple Watch 能力限制」 |
+| `shortcut-setup-guide.md` | Notion Database 欄位對應、逐步建立捷徑教學、錯誤排除表 |
+| `update.sh` | 一鍵 `git add && commit && push` 腳本 |
+| `.env.example` | Notion API 設定範本（`NOTION_TOKEN` / `NOTION_DATABASE_ID` / `NOTION_VERSION` / `NOTION_ENDPOINT`），不含真實金鑰 |
+
+## 常用指令
+- **推送變更**：`./update.sh "訊息"`（不帶參數會互動詢問訊息）— 等同「push」/「同步」/「更新」觸發詞
+- **沒有 build / lint / test**：這不是傳統程式碼庫，沒有可執行的程式語言檔案。驗證方式一律是**在 iOS 捷徑 App 裡實際跑一次該 Action/Shortcut**，並確認 Notion 資料庫寫入結果或「快速查看」輸出是否符合預期。
+
+## 系統架構（Pipeline）
+兩個 Shortcut 組成端到端流程：
+
+1. **Shortcut A（Notion Memo，錄音端）**：Apple Watch 或 iPhone 錄音 → 儲存到 iCloud Drive `NotionMemo` 資料夾
+2. **Shortcut B（Notion Processor，處理端）**：
+   `取得檔案夾的內容` → `重複每個項目` → `編碼媒體`（僅音訊：開，File→Audio 轉型）→ `轉錄音訊` → `使用 ChatGPT` 整理文字 → `取代文字` 清理 → `取得 URL 的內容`（POST）寫入 Notion → `刪除檔案`
+3. **自動化觸發**：藍牙 / 充電器 / 時間 三重觸發呼叫 Shortcut B（多筆錄音處理策略尚未定案，見 README 問題積欠清單 #7）
+
+### Notion 寫入 Schema
+Database ID `340a0e5b9b3580ca8a58e6a51b606e4e`，POST `https://api.notion.com/v1/pages`（`Notion-Version: 2022-06-28`）：
+
+| 欄位 | 類型 | 內容 |
+|---|---|---|
+| `Name` | Title | 格式化時間戳（`yyyy-MM-dd HH:mm`） |
+| `Captured At` | Date | ISO 8601 時間 |
+| `Raw` | Text | 轉錄/整理後文字 |
+| `Source` | Select | `iPhone` 或 `Apple Watch` |
+| `Status` | Select | 固定 `Inbox` |
+
+### 已知限制（規劃前必讀）
+- Apple Watch **不能**跑 ChatGPT / Apple Intelligence / 穩定的轉錄音訊 — 需 AI 或重運算的步驟一律交給 iPhone（`執行捷徑` 轉手）
+- iCloud Drive 檔案會被系統回收成雲端佔位檔（☁️），導致「編碼媒體」失敗 → 目前用「取得檔案夾內容」+「排序：製作日期最新優先」+「限制 1」只處理最新一筆繞過
+- 字典（JSON 解析）索引是 **1-based**，不是 0-based
+- Base64 輸出含 MIME 換行，如需清理要用「分開文字＋結合文字」
+- watchOS 版「儲存到 iCloud Drive」是同步阻塞、離線會逾時，不像 iPhone 有本機快取
+- 詳細清單與更新見 `SHORTCUTS_PLUGINS.md`
